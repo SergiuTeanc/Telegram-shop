@@ -9,12 +9,12 @@ this is a fairly simple template, but at the same time it is quite effective for
   ![](assets/menu_picture.png)  
   ![](assets/admin_menu_picture.png)
 ### Catalog
-  The catalog consists of categories and positions. The user can buy goods from the positions, and the administrator can manage them
+  The catalog consists of categories and positions. The user can buy goods from the positions, and the administrator can manage them  
   ![](assets/categories_picture.png)  
   ![](assets/positions_picture.png)  
   ![](assets/position_description_picture.png)
 ### Other
-  The bot has configured logging that reports errors or actions of administrators
+  The bot has configured logging that reports errors or actions of administrators  
 ## Tech Stack 💻
 - #### Languages:
   - Python 3.10
