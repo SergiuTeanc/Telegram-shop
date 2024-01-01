@@ -274,7 +274,7 @@ async def process_replenish_balance(message: types.Message):
 async def checking_payment(callback_query: types.CallbackQuery):
     bot, user_id = await get_bot_user_ids(callback_query)
     message_id = callback_query.message.message_id
-    label = str(callback_query.data[6:])
+    label = str(callback_query.data.split('_'))
     info = select_unfinished_operations(label)
 
     if info:

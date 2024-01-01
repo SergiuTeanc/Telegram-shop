@@ -121,7 +121,7 @@ async def process_category_for_add(message: types.Message):
                                 reply_markup=back('categories_management'))
     admin_info = await bot.get_chat(user_id)
     logger.info(f"Пользователь {user_id} ({admin_info.first_name}) "
-                f'создал новую категорию "{category}"')
+                f'создал новую категорию "{msg}"')
 
 
 async def delete_category_callback_handler(callback_query: types.CallbackQuery):
