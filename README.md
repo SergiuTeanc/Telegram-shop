@@ -1,7 +1,11 @@
 # Telegram shop
 This is an example Telegram shop bot.
-this is a fairly simple template, but at the same time it is quite effective for selling something directly in a telegram
-
+this is a fairly simple template, but at the same time it is quite effective for selling something directly in a telegram  
+## Example:  
+### admin pov  
+![](assets/admin_pov.gif)
+### user pov:
+![](assets/user_pov.gif)
 ## What can it do?
 - `/start` - needed to start the bot
 ### Menu

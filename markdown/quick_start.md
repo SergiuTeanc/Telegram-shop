@@ -14,3 +14,4 @@
       - [RECEIVER_TOKEN](https://pypi.org/project/YooMoney/#account-information)
       - [DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html#setting-alternate-search-paths-on-connect)
    5. Run run.py
+### [BACK](../README.md)
