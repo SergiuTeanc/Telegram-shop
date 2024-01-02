@@ -57,7 +57,7 @@ async def user_profile_view(callback_query: types.CallbackQuery):
     user_id = callback_query.data[11:]
     bot, admin_id = await get_bot_user_ids(callback_query)
     TgConfig.STATE[user_id] = None
-    TgConfig.STATE[f'{user_id}_user_data'] = user_id
+    TgConfig.STATE[f'{admin_id}_user_data'] = user_id
     user = check_user(user_id)
     admin_permissions = check_role(admin_id)
     user_permissions = check_role(user_id)
