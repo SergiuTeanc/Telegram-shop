@@ -253,7 +253,7 @@ async def process_replenish_balance(message: types.Message):
     TgConfig.STATE[user_id] = None
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
-    if not msg.isdigit() or int(msg) < 20 or int(msg) > 10000:
+    if not msg.isdigit() or int(msg) < 2 or int(msg) > 10000:
         await bot.edit_message_text(chat_id=message.chat.id,
                                     message_id=message_id,
                                     text="❌ Неверная сумма пополнения. "
@@ -274,7 +274,7 @@ async def process_replenish_balance(message: types.Message):
 async def checking_payment(callback_query: types.CallbackQuery):
     bot, user_id = await get_bot_user_ids(callback_query)
     message_id = callback_query.message.message_id
-    label = str(callback_query.data.split('_'))
+    label = callback_query.data[6:]
     info = select_unfinished_operations(label)
 
     if info:
