@@ -104,11 +104,11 @@ def user_management(admin_role, user_role, admin_manage, items, user_id) -> Inli
     ]
     if items > 0:
         inline_keyboard.append([InlineKeyboardButton('🎁 Купленные товары', callback_data=f'user-items_{user_id}')])
-    if admin_role >= admin_manage:
+    if admin_role >= admin_manage and admin_role > user_role:
         if user_role == 1:
             inline_keyboard.append(
                 [InlineKeyboardButton('⬆️ Назначить администратором', callback_data=f'set-admin_{user_id}')])
-        elif 1 < user_role < admin_role:
+        else:
             inline_keyboard.append(
                 [InlineKeyboardButton('⬇️ Снять администратора', callback_data=f'remove-admin_{user_id}')])
     inline_keyboard.append([InlineKeyboardButton('🔙 Вернуться назад', callback_data='user_management')])

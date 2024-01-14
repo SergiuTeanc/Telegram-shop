@@ -158,7 +158,7 @@ async def bought_items_callback_handler(callback_query: types.CallbackQuery):
 
 
 async def bought_item_info_callback_handler(callback_query: types.CallbackQuery):
-    item_label, item_id = callback_query.data.split("_")
+    item_id = callback_query.data.split("_")[1]
     bot, user_id = await get_bot_user_ids(callback_query)
     TgConfig.STATE[user_id] = None
     item = get_bought_item_info(item_id)
@@ -253,7 +253,7 @@ async def process_replenish_balance(message: types.Message):
     TgConfig.STATE[user_id] = None
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
-    if not msg.isdigit() or int(msg) < 2 or int(msg) > 10000:
+    if not msg.isdigit() or int(msg) < 20 or int(msg) > 10000:
         await bot.edit_message_text(chat_id=message.chat.id,
                                     message_id=message_id,
                                     text="❌ Неверная сумма пополнения. "
