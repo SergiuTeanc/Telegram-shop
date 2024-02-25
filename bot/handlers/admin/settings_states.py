@@ -1,4 +1,5 @@
-from aiogram import Dispatcher, types
+from aiogram import Dispatcher
+from aiogram.types import Message, CallbackQuery
 
 from bot.database.models import Permission
 from bot.keyboards import setting, back, reset_config
@@ -9,39 +10,39 @@ from bot.logger_mesh import logger
 from bot.handlers.other import get_bot_user_ids
 
 
-async def settings_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def settings_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role >= Permission.SETTINGS_MANAGE:
         await bot.edit_message_text('⛩️ Меню управления настройками',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=setting())
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def reset_config_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    key = callback_query.data[6:]
+async def reset_config_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    key = call.data[6:]
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role >= Permission.SETTINGS_MANAGE:
         delete_config(key)
         await bot.edit_message_text(f'✅ {key} сброшен',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back('settings'))
         user_info = await bot.get_chat(user_id)
         logger.info(f"{key} был сброшен пользователем {user_id} ({user_info.first_name})")
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def upd_channel_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def upd_channel_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'upd_channel'
     if check_channel():
         keyboard = reset_config('channel')
@@ -53,15 +54,15 @@ async def upd_channel_callback_handler(callback_query: types.CallbackQuery):
             'Введите ссылку на канал для добавления\nНапример <s>https://t.me/</s> <u>1a2b3c4d5e6f7g8h</u>\n'
             'Перед этим назначьте бота администратором канала, бот будет проверять, '
             'подписан ли пользователь на данный канал',
-            chat_id=callback_query.message.chat.id,
-            message_id=callback_query.message.message_id,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
             parse_mode='HTML',
             reply_markup=keyboard)
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def process_channel_for_upd(message: types.Message):
+async def process_channel_for_upd(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[user_id] = None
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -79,9 +80,9 @@ async def process_channel_for_upd(message: types.Message):
     logger.info(f"Канал был обновлен пользователем {user_id} ({user_info.first_name})")
 
 
-async def upd_helper_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def upd_helper_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'upd_helper'
     if check_helper():
         keyboard = reset_config('helper')
@@ -91,15 +92,15 @@ async def upd_helper_callback_handler(callback_query: types.CallbackQuery):
     if role >= Permission.SETTINGS_MANAGE:
         await bot.edit_message_text('Введите никнейм саппорта для добавления\n'
                                     'Например <u>@username</u>',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     parse_mode='HTML',
                                     reply_markup=keyboard)
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def process_helper_for_upd(message: types.Message):
+async def process_helper_for_upd(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[user_id] = None
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -117,9 +118,9 @@ async def process_helper_for_upd(message: types.Message):
     logger.info(f"Саппорт был обновлен пользователем {user_id} ({user_info.first_name})")
 
 
-async def upd_rules_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def upd_rules_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'upd_rules'
     if check_rules():
         keyboard = reset_config('rules')
@@ -128,14 +129,14 @@ async def upd_rules_callback_handler(callback_query: types.CallbackQuery):
     role = check_role(user_id)
     if role >= Permission.SETTINGS_MANAGE:
         await bot.edit_message_text('Введите правила для добавления',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=keyboard)
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def process_rules_for_upd(message: types.Message):
+async def process_rules_for_upd(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[user_id] = None
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -153,9 +154,9 @@ async def process_rules_for_upd(message: types.Message):
     logger.info(f"Правила были обновлены пользователем {user_id} ({user_info.first_name})")
 
 
-async def upd_group_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def upd_group_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'upd_group'
     if check_group():
         keyboard = reset_config('group')
@@ -169,15 +170,15 @@ async def upd_group_callback_handler(callback_query: types.CallbackQuery):
                                     '🎁 Залив\n'
                                     '🏷️ Товар: *<b>Item</b>*\n'
                                     '📦 Количество: *<b>number</b>*',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     parse_mode='HTML',
                                     reply_markup=keyboard)
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def process_group_for_upd(message: types.Message):
+async def process_group_for_upd(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[user_id] = None
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')

@@ -1,9 +1,11 @@
+from typing import List
+
 import sqlalchemy
+from sqlalchemy import cast, Date
+from sqlalchemy import exc, func
+
 from bot.database.models import Database, User, ItemValues, Goods, Categories, Configuration, Role, BoughtGoods, \
     Operations, UnfinishedOperations
-from sqlalchemy import exc, func
-from sqlalchemy import cast, Date
-from typing import List
 
 
 def check_user(telegram_id: int) -> User | None:
@@ -118,12 +120,31 @@ def select_item_values_amount(item_name: str) -> int:
     return Database().session.query(func.count()).filter(ItemValues.item_name == item_name).scalar()
 
 
+def check_value(item_name: str) -> bool | None:
+    try:
+        result = False
+        values = select_item_values_amount(item_name)
+        for i in range(values):
+            is_inf = Database().session.query(ItemValues).filter(ItemValues.item_name == item_name).first()
+            if is_inf and is_inf.is_infinity:
+                result = True
+    except exc.NoResultFound:
+        return False
+    return result
+
+
 def select_user_items(buyer_id: int) -> int:
     return Database().session.query(func.count()).filter(BoughtGoods.buyer_id == buyer_id).scalar()
 
 
 def select_bought_items(buyer_id: int) -> list:
     return Database().session.query(BoughtGoods).filter(BoughtGoods.buyer_id == buyer_id).all()
+
+
+def bought_items_list(buyer_id: int) -> List[str]:
+    return [
+        item[0] for item in
+        Database().session.query(BoughtGoods.item_name).filter(BoughtGoods.buyer_id == buyer_id).all()]
 
 
 def select_all_users() -> int:

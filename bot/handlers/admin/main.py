@@ -1,4 +1,5 @@
-from aiogram import Dispatcher, types
+from aiogram import Dispatcher
+from aiogram.types import CallbackQuery
 
 from bot.keyboards import console
 from bot.database.methods import check_role
@@ -11,14 +12,14 @@ from bot.handlers.admin.settings_states import register_settings
 from bot.handlers.other import get_bot_user_ids
 
 
-async def console_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def console_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role > 1:
         await bot.edit_message_text('⛩️ Меню администратора',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=console())
 
 

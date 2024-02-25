@@ -26,28 +26,52 @@ def main_menu(role, channel=None, helper=None) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
 
-def categories_list(list_items) -> InlineKeyboardMarkup:
-    inline_keyboard = []
-    for name in list_items:
-        inline_keyboard.append([InlineKeyboardButton(name, callback_data=f'category_{name}')])
-    inline_keyboard.append([InlineKeyboardButton('🔙 Вернуться в меню', callback_data='back_to_menu')])
-    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+def categories_list(list_items, current_index, max_index) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    page_items = list_items[current_index * 10: (current_index + 1) * 10]
+    for name in page_items:
+        markup.add(InlineKeyboardButton(text=name, callback_data=f'category_{name}'))
+    if max_index > 0:
+        buttons = [
+            InlineKeyboardButton(text='◀️', callback_data=f'categories-page_{current_index - 1}'),
+            InlineKeyboardButton(text=f'{current_index + 1}/{max_index + 1}', callback_data='dummy_button'),
+            InlineKeyboardButton(text='▶️', callback_data=f'categories-page_{current_index + 1}')
+        ]
+        markup.row(*buttons)
+    markup.add(InlineKeyboardButton('🔙 Вернуться в меню', callback_data='back_to_menu'))
+    return markup
 
 
-def goods_list(list_items) -> InlineKeyboardMarkup:
-    inline_keyboard = []
-    for name in list_items:
-        inline_keyboard.append([InlineKeyboardButton(name, callback_data=f'item_{name}')])
-    inline_keyboard.append([InlineKeyboardButton('🔙 Вернуться назад', callback_data='shop')])
-    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+def goods_list(list_items, category_name, current_index, max_index) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    page_items = list_items[current_index * 10: (current_index + 1) * 10]
+    for name in page_items:
+        markup.add(InlineKeyboardButton(text=name, callback_data=f'item_{name}'))
+    if max_index > 0:
+        buttons = [
+            InlineKeyboardButton(text='◀️', callback_data=f'goods-page_{category_name}_{current_index - 1}'),
+            InlineKeyboardButton(text=f'{current_index + 1}/{max_index + 1}', callback_data='dummy_button'),
+            InlineKeyboardButton(text='▶️', callback_data=f'goods-page_{category_name}_{current_index + 1}')
+        ]
+        markup.row(*buttons)
+    markup.add(InlineKeyboardButton('🔙 Вернуться назад', callback_data='shop'))
+    return markup
 
 
-def user_items_list(list_items, back_data) -> InlineKeyboardMarkup:
-    inline_keyboard = []
-    for item in list_items:
-        inline_keyboard.append([InlineKeyboardButton(item.item_name, callback_data=f'bought-item_{item.id}')])
-    inline_keyboard.append([InlineKeyboardButton('🔙 Вернуться назад', callback_data=back_data)])
-    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+def user_items_list(list_items, data, back_data, pre_back, current_index, max_index) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardMarkup()
+    page_items = list_items[current_index * 10: (current_index + 1) * 10]
+    for item in page_items:
+        markup.add(InlineKeyboardButton(text=item.item_name, callback_data=f'bought-item:{item.id}:{pre_back}'))
+    if max_index > 0:
+        buttons = [
+            InlineKeyboardButton(text='◀️', callback_data=f'bought-goods-page_{current_index - 1}_{data}'),
+            InlineKeyboardButton(text=f'{current_index + 1}/{max_index + 1}', callback_data='dummy_button'),
+            InlineKeyboardButton(text='▶️', callback_data=f'bought-goods-page_{current_index + 1}_{data}')
+        ]
+        markup.row(*buttons)
+    markup.add(InlineKeyboardButton('🔙 Вернуться назад', callback_data=back_data))
+    return markup
 
 
 def item_info(item_name, category_name) -> InlineKeyboardMarkup:
@@ -127,7 +151,7 @@ def user_manage_check(user_id) -> InlineKeyboardMarkup:
 
 def shop_management() -> InlineKeyboardMarkup:
     inline_keyboard = [
-        [InlineKeyboardButton('Управление товарами', callback_data='goods_management')
+        [InlineKeyboardButton('Управление позициями (товарами)', callback_data='goods_management')
          ],
         [InlineKeyboardButton('Управление категориями', callback_data='categories_management')
          ],
@@ -141,9 +165,9 @@ def shop_management() -> InlineKeyboardMarkup:
 
 def goods_management() -> InlineKeyboardMarkup:
     inline_keyboard = [
-        [InlineKeyboardButton('добавить товар', callback_data='item-management'),
-         InlineKeyboardButton('изменить товар', callback_data='update_item'),
-         InlineKeyboardButton('удалить товар', callback_data='delete_item')
+        [InlineKeyboardButton('добавить позицию (товар)', callback_data='item-management'),
+         InlineKeyboardButton('изменить позицию', callback_data='update_item'),
+         InlineKeyboardButton('удалить позицию', callback_data='delete_item')
          ],
         [InlineKeyboardButton('🔙 Вернуться назад', callback_data='shop_management')
          ]
@@ -153,8 +177,8 @@ def goods_management() -> InlineKeyboardMarkup:
 
 def item_management() -> InlineKeyboardMarkup:
     inline_keyboard = [
-        [InlineKeyboardButton('создать товар', callback_data='add_item'),
-         InlineKeyboardButton('добавить к существующему', callback_data='update_item_amount'),
+        [InlineKeyboardButton('создать позицию', callback_data='add_item'),
+         InlineKeyboardButton('добавить товар к существующей', callback_data='update_item_amount'),
          ],
         [InlineKeyboardButton('🔙 Вернуться назад', callback_data='goods_management')
          ]
@@ -230,6 +254,17 @@ def reset_config(key) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f'Сбросить {key}', callback_data=f'reset_{key}')
          ],
         [InlineKeyboardButton('🔙 Вернуться назад', callback_data='settings')
+         ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+
+
+def question_buttons(question, back_data) -> InlineKeyboardMarkup:
+    inline_keyboard = [
+        [InlineKeyboardButton('✅ Да', callback_data=f'{question}_yes'),
+         InlineKeyboardButton('❌ Нет', callback_data=f'{question}_no')
+         ],
+        [InlineKeyboardButton('🔙 Вернуться назад', callback_data=back_data)
          ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)

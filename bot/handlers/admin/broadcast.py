@@ -1,5 +1,6 @@
 import asyncio
-from aiogram import Dispatcher, types
+from aiogram import Dispatcher
+from aiogram.types import Message, CallbackQuery
 from aiogram.utils.exceptions import BotBlocked
 
 from bot.keyboards import back, close
@@ -10,21 +11,21 @@ from bot.logger_mesh import logger
 from bot.handlers.other import get_bot_user_ids
 
 
-async def send_message_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def send_message_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = 'waiting_for_message'
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     role = check_role(user_id)
     if role >= Permission.BROADCAST:
-        await bot.edit_message_text(chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+        await bot.edit_message_text(chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     text='Отправьте сообщение для рассылки:',
                                     reply_markup=back("console"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def broadcast_messages(message: types.Message):
+async def broadcast_messages(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     user_info = await bot.get_chat(user_id)
     msg = message.text

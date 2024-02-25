@@ -116,10 +116,12 @@ class ItemValues(Database.BASE):
     id = Column(Integer, nullable=False, primary_key=True)
     item_name = Column(String(100), nullable=False)
     value = Column(Text, nullable=True)
+    is_infinity = Column(Boolean, nullable=False)
 
-    def __init__(self, name: str, value: str):
+    def __init__(self, name: str, value: str, is_infinity: bool):
         self.item_name = name
         self.value = value
+        self.is_infinity = is_infinity
 
 
 class BoughtGoods(Database.BASE):

@@ -29,10 +29,14 @@ def create_item(item_name: str, item_description: str, item_price: int, category
     session.commit()
 
 
-def add_values_to_item(item_name: str, values) -> None:
+def add_values_to_item(item_name: str, values, is_infinity) -> None:
     session = Database().session
-    session.add(
-        ItemValues(name=item_name, value=values))
+    if is_infinity != 'yes':
+        session.add(
+            ItemValues(name=item_name, value=values, is_infinity=False))
+    else:
+        session.add(
+            ItemValues(name=item_name, value=values, is_infinity=True))
     session.commit()
 
 

@@ -7,6 +7,9 @@ def delete_item(item_name) -> None:
     Database().session.commit()
 
 
+def delete_only_items(item_name) -> None:
+    Database().session.query(ItemValues).filter(ItemValues.item_name == item_name).delete()
+
 def delete_category(category_name) -> None:
     goods = Database().session.query(Goods.name).filter(Goods.category_name == category_name).all()
     for item in goods:
@@ -21,9 +24,12 @@ def finish_operation(operation_id) -> None:
     Database().session.commit()
 
 
-def buy_item(item_id) -> None:
-    Database().session.query(ItemValues).filter(ItemValues.id == item_id).delete()
-    Database().session.commit()
+def buy_item(item_id, infinity=False) -> None:
+    if infinity is False:
+        Database().session.query(ItemValues).filter(ItemValues.id == item_id).delete()
+        Database().session.commit()
+    else:
+        pass
 
 
 def delete_config(key) -> None:

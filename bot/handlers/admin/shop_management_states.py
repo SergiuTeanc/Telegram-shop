@@ -1,74 +1,77 @@
 import datetime
 
-from aiogram import Dispatcher, types
+from aiogram import Dispatcher
+from aiogram.types import Message, CallbackQuery
 from aiogram.utils.exceptions import ChatNotFound
 
-from bot.database.models import Permission
-from bot.logger_mesh import logger
-from bot.keyboards import shop_management, goods_management, categories_management, back, item_management
 from bot.database.methods import check_role, select_today_users, select_admins, get_user_count, select_today_orders, \
     select_all_orders, select_today_operations, select_users_balance, select_all_operations, select_count_items, \
     select_count_goods, select_count_categories, select_count_bought_items, check_category, create_category, \
-    delete_category, update_category, check_item, create_item, add_values_to_item, check_group, update_item, delete_item
-from bot.misc import TgConfig
+    delete_category, update_category, check_item, create_item, add_values_to_item, check_group, update_item, \
+    delete_item, check_value, delete_only_items
+from bot.database.models import Permission
 from bot.handlers.other import get_bot_user_ids
+from bot.keyboards import shop_management, goods_management, categories_management, back, item_management, \
+    question_buttons
+from bot.logger_mesh import logger
+from bot.misc import TgConfig
 
 
-async def shop_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def shop_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('⛩️ Меню управления магазином',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=shop_management())
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def goods_management_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def goods_management_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('⛩️ Меню управления позициями',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=goods_management())
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def categories_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def categories_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('⛩️ Меню управления категориями',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=categories_management())
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def add_category_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def add_category_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = 'add_category'
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('Введите название категории',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back("categories_management"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def statistics_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def statistics_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
@@ -92,15 +95,15 @@ async def statistics_callback_handler(callback_query: types.CallbackQuery):
                                     f'◾Позиций: {select_count_goods()}шт.\n'
                                     f'◾Категорий: {select_count_categories()}шт.\n'
                                     f'◾Продано товаров: {select_count_bought_items()}шт.',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back('shop_management'),
                                     parse_mode='HTML')
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def process_category_for_add(message: types.Message):
+async def process_category_for_add(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     msg = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -124,21 +127,21 @@ async def process_category_for_add(message: types.Message):
                 f'создал новую категорию "{msg}"')
 
 
-async def delete_category_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def delete_category_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = 'delete_category'
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('Введите название категории',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back("categories_management"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def process_category_for_delete(message: types.Message):
+async def process_category_for_delete(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     msg = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -162,21 +165,21 @@ async def process_category_for_delete(message: types.Message):
                 f'удалил категорию "{category}"')
 
 
-async def update_category_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def update_category_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'check_category'
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('Введите название категории для обновления:',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back("categories_management"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def check_category_for_update(message: types.Message):
+async def check_category_for_update(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     category_name = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -196,7 +199,7 @@ async def check_category_for_update(message: types.Message):
                                 reply_markup=back('categories_management'))
 
 
-async def check_category_name_for_update(message: types.Message):
+async def check_category_name_for_update(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     category = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -213,34 +216,34 @@ async def check_category_name_for_update(message: types.Message):
                 f'изменил категорию "{old_name}" на "{category}"')
 
 
-async def goods_settings_menu_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def goods_settings_menu_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('⛩️ Выберите действие для позиции',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=item_management())
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def add_item_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def add_item_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'create_item_name'
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('Введите название позиции',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back("item-management"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def check_item_name_for_add(message: types.Message):
+async def check_item_name_for_add(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     item_name = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -260,7 +263,7 @@ async def check_item_name_for_add(message: types.Message):
                                 reply_markup=back('item-management'))
 
 
-async def add_item_description(message: types.Message):
+async def add_item_description(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[f'{user_id}_description'] = message.text
     TgConfig.STATE[user_id] = 'create_item_price'
@@ -273,7 +276,7 @@ async def add_item_description(message: types.Message):
                                 reply_markup=back('item-management'))
 
 
-async def add_item_price(message: types.Message):
+async def add_item_price(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
     await bot.delete_message(chat_id=message.chat.id,
@@ -292,7 +295,7 @@ async def add_item_price(message: types.Message):
                                 reply_markup=back('item-management'))
 
 
-async def check_category_for_add_item(message: types.Message):
+async def check_category_for_add_item(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     category_name = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -305,15 +308,34 @@ async def check_category_for_add_item(message: types.Message):
                                     text='❌ Позиция не может быть создана (Категория для привязки введена неверно)',
                                     reply_markup=back('item-management'))
         return
-    TgConfig.STATE[user_id] = 'add_item_value'
+    TgConfig.STATE[user_id] = None
     TgConfig.STATE[f'{user_id}_category'] = category_name
     await bot.edit_message_text(chat_id=message.chat.id,
                                 message_id=message_id,
-                                text='Введите через ; товары для позиции:',
-                                reply_markup=back('item-management'))
+                                text='У этой позиции будут бесконечные товары? '
+                                     '(всем будет высылаться одна копия товара)',
+                                reply_markup=question_buttons('infinity', 'item-management'))
 
 
-async def adding_item(message: types.Message):
+async def adding_value_to_position(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    answer = call.data.split('_')[1]
+    message_id = TgConfig.STATE.get(f'{user_id}_message_id')
+    TgConfig.STATE[user_id] = 'add_item_value'
+    TgConfig.STATE[f'{user_id}_answer'] = answer
+    if answer == 'no':
+        await bot.edit_message_text(chat_id=call.message.chat.id,
+                                    message_id=message_id,
+                                    text='Введите через ; товары для позиции:',
+                                    reply_markup=back('item-management'))
+    else:
+        await bot.edit_message_text(chat_id=call.message.chat.id,
+                                    message_id=message_id,
+                                    text='Введите товар для позиции:',
+                                    reply_markup=back('item-management'))
+
+
+async def adding_item(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[user_id] = None
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -321,46 +343,71 @@ async def adding_item(message: types.Message):
     item_description = TgConfig.STATE.get(f'{user_id}_description')
     item_price = TgConfig.STATE.get(f'{user_id}_price')
     category_name = TgConfig.STATE.get(f'{user_id}_category')
-    values_list = message.text.split(';')
-    await bot.delete_message(chat_id=message.chat.id,
-                             message_id=message.message_id)
-    create_item(item_name, item_description, item_price, category_name)
-    for i in values_list:
-        add_values_to_item(item_name, i)
-    group_id = check_group()
-    if group_id:
-        try:
-            await bot.send_message(chat_id=group_id,
-                                   text=f'🎁 Залив\n'
-                                        f'🏷️ Товар: <b>{item_name}</b>'
-                                        f'\n📦 Количество: <b>{len(values_list)}</b>',
-                                   parse_mode='HTML')
-        except ChatNotFound:
-            pass
-    await bot.edit_message_text(chat_id=message.chat.id,
-                                message_id=message_id,
-                                text='✅ Позиция создана, товары добавлены',
-                                reply_markup=back('item-management'))
-    admin_info = await bot.get_chat(user_id)
-    logger.info(f"Пользователь {user_id} ({admin_info.first_name}) "
-                f'создал новую позицию "{item_name}"')
+    answer = TgConfig.STATE.get(f'{user_id}_answer')
+    if answer == 'no':
+        values_list = message.text.split(';')
+        await bot.delete_message(chat_id=message.chat.id,
+                                 message_id=message.message_id)
+        create_item(item_name, item_description, item_price, category_name)
+        for i in values_list:
+            add_values_to_item(item_name, i, answer)
+        group_id = check_group()
+        if group_id:
+            try:
+                await bot.send_message(chat_id=group_id,
+                                       text=f'🎁 Залив\n'
+                                            f'🏷️ Товар: <b>{item_name}</b>'
+                                            f'\n📦 Количество: <b>{len(values_list)}</b>',
+                                       parse_mode='HTML')
+            except ChatNotFound:
+                pass
+        await bot.edit_message_text(chat_id=message.chat.id,
+                                    message_id=message_id,
+                                    text='✅ Позиция создана, товар добавлен',
+                                    reply_markup=back('item-management'))
+        admin_info = await bot.get_chat(user_id)
+        logger.info(f"Пользователь {user_id} ({admin_info.first_name}) "
+                    f'создал новую позицию "{item_name}"')
+    else:
+        value = message.text
+        await bot.delete_message(chat_id=message.chat.id,
+                                 message_id=message.message_id)
+        create_item(item_name, item_description, item_price, category_name)
+        add_values_to_item(item_name, value, answer)
+        group_id = check_group()
+        if group_id:
+            try:
+                await bot.send_message(chat_id=group_id,
+                                       text=f'🎁 Залив\n'
+                                            f'🏷️ Товар: <b>{item_name}</b>'
+                                            f'\n📦 Количество: <b>неограниченно</b>',
+                                       parse_mode='HTML')
+            except ChatNotFound:
+                pass
+        await bot.edit_message_text(chat_id=message.chat.id,
+                                    message_id=message_id,
+                                    text='✅ Позиция создана, товар добавлен',
+                                    reply_markup=back('item-management'))
+        admin_info = await bot.get_chat(user_id)
+        logger.info(f"Пользователь {user_id} ({admin_info.first_name}) "
+                    f'создал новую позицию "{item_name}"')
 
 
-async def update_item_amount_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def update_item_amount_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'update_amount_of_item'
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('Введите название позиции',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back("item-management"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def check_item_name_for_amount_upd(message: types.Message):
+async def check_item_name_for_amount_upd(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     item_name = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -373,15 +420,21 @@ async def check_item_name_for_amount_upd(message: types.Message):
                                     text='❌ Товар не может быть добавлен (Такой позиции не существует)',
                                     reply_markup=back('goods_management'))
     else:
-        TgConfig.STATE[user_id] = 'add_new_amount'
-        TgConfig.STATE[f'{user_id}_name'] = message.text
-        await bot.edit_message_text(chat_id=message.chat.id,
-                                    message_id=message_id,
-                                    text='Введите через ; товары для позиции:',
-                                    reply_markup=back('goods_management'))
+        if check_value(item_name) is False:
+            TgConfig.STATE[user_id] = 'add_new_amount'
+            TgConfig.STATE[f'{user_id}_name'] = message.text
+            await bot.edit_message_text(chat_id=message.chat.id,
+                                        message_id=message_id,
+                                        text='Введите через ; товары для позиции:',
+                                        reply_markup=back('goods_management'))
+        else:
+            await bot.edit_message_text(chat_id=message.chat.id,
+                                        message_id=message_id,
+                                        text='❌ Товар не может быть добавлен (У данной позиции бесконечный товар)',
+                                        reply_markup=back('goods_management'))
 
 
-async def updating_item_amount(message: types.Message):
+async def updating_item_amount(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     values_list = message.text.split(';')
     TgConfig.STATE[user_id] = None
@@ -390,7 +443,7 @@ async def updating_item_amount(message: types.Message):
     await bot.delete_message(chat_id=message.chat.id,
                              message_id=message.message_id)
     for i in values_list:
-        add_values_to_item(item_name, i)
+        add_values_to_item(item_name, i, False)
     group_id = check_group()
     if group_id:
         try:
@@ -407,24 +460,24 @@ async def updating_item_amount(message: types.Message):
                                 reply_markup=back('goods_management'))
     admin_info = await bot.get_chat(user_id)
     logger.info(f"Пользователь {user_id} ({admin_info.first_name}) "
-                f'добавил товары в позицию "{item_name}", в количестве {len(values_list)} шт')
+                f'добавил товары к позиции "{item_name}" в количестве {len(values_list)} шт')
 
 
-async def update_item_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
+async def update_item_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = 'check_item_name'
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
         await bot.edit_message_text('Введите название позиции',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back("goods_management"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def check_item_name_for_update(message: types.Message):
+async def check_item_name_for_update(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     item_name = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -446,7 +499,7 @@ async def check_item_name_for_update(message: types.Message):
                                 reply_markup=back('goods_management'))
 
 
-async def update_item_name(message: types.Message):
+async def update_item_name(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[f'{user_id}_name'] = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -459,7 +512,7 @@ async def update_item_name(message: types.Message):
                                 reply_markup=back('goods_management'))
 
 
-async def update_item_description(message: types.Message):
+async def update_item_description(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[f'{user_id}_description'] = message.text
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -472,7 +525,7 @@ async def update_item_description(message: types.Message):
                                 reply_markup=back('goods_management'))
 
 
-async def update_item_price(message: types.Message):
+async def update_item_price(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     TgConfig.STATE[user_id] = None
     message_id = TgConfig.STATE.get(f'{user_id}_message_id')
@@ -484,11 +537,77 @@ async def update_item_price(message: types.Message):
                                     text='⚠️ некорректное значение цены.',
                                     reply_markup=back('goods_management'))
         return
+    TgConfig.STATE[f'{user_id}_price'] = message.text
+    item_old_name = TgConfig.STATE.get(f'{user_id}_old_name')
+    if check_value(item_old_name) is False:
+        await bot.edit_message_text(chat_id=message.chat.id,
+                                    message_id=message_id,
+                                    text='Вы хотите сделать бесконечные товары?',
+                                    reply_markup=question_buttons('change_make_infinity', 'goods_management'))
+    else:
+        await bot.edit_message_text(chat_id=message.chat.id,
+                                    message_id=message_id,
+                                    text='Вы хотите отменить бесконечные товары?',
+                                    reply_markup=question_buttons('change_deny_infinity', 'goods_management'))
+
+
+async def update_item_process(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    answer = call.data.split('_')
+    message_id = TgConfig.STATE.get(f'{user_id}_message_id')
     item_old_name = TgConfig.STATE.get(f'{user_id}_old_name')
     item_new_name = TgConfig.STATE.get(f'{user_id}_name')
     item_description = TgConfig.STATE.get(f'{user_id}_description')
     category = TgConfig.STATE.get(f'{user_id}_category')
-    update_item(item_old_name, item_new_name, item_description, message.text, category)
+    price = TgConfig.STATE.get(f'{user_id}_price')
+    if answer[3] == 'no':
+        TgConfig.STATE[user_id] = None
+        update_item(item_old_name, item_new_name, item_description, price, category)
+        await bot.edit_message_text(chat_id=call.message.chat.id,
+                                    message_id=message_id,
+                                    text='✅ Позиция обновлена',
+                                    reply_markup=back('goods_management'))
+        admin_info = await bot.get_chat(user_id)
+        logger.info(f"Пользователь {user_id} ({admin_info.first_name}) "
+                    f'обновил позицию "{item_old_name}" на "{item_new_name}"')
+    else:
+        if answer[1] == 'make':
+            await bot.edit_message_text(chat_id=call.message.chat.id,
+                                        message_id=message_id,
+                                        text='Введите товар для позиции:',
+                                        reply_markup=back('goods_management'))
+            TgConfig.STATE[f'{user_id}_change'] = 'make'
+        elif answer[1] == 'deny':
+            await bot.edit_message_text(chat_id=call.message.chat.id,
+                                        message_id=message_id,
+                                        text='Введите через ; товары для позиции:',
+                                        reply_markup=back('goods_management'))
+            TgConfig.STATE[f'{user_id}_change'] = 'deny'
+    TgConfig.STATE[user_id] = 'apply_change'
+
+
+async def update_item_infinity(message: Message):
+    bot, user_id = await get_bot_user_ids(message)
+    msg = message.text
+    change = TgConfig.STATE[f'{user_id}_change']
+    message_id = TgConfig.STATE.get(f'{user_id}_message_id')
+    item_old_name = TgConfig.STATE.get(f'{user_id}_old_name')
+    item_new_name = TgConfig.STATE.get(f'{user_id}_name')
+    item_description = TgConfig.STATE.get(f'{user_id}_description')
+    category = TgConfig.STATE.get(f'{user_id}_category')
+    price = TgConfig.STATE.get(f'{user_id}_price')
+    await bot.delete_message(chat_id=message.chat.id,
+                             message_id=message.message_id)
+    if change == 'make':
+        delete_only_items(item_old_name)
+        add_values_to_item(item_old_name, msg, 'yes')
+    elif change == 'deny':
+        delete_only_items(item_old_name)
+        values_list = msg.split(';')
+        for i in values_list:
+            add_values_to_item(item_old_name, i, 'no')
+    TgConfig.STATE[user_id] = None
+    update_item(item_old_name, item_new_name, item_description, price, category)
     await bot.edit_message_text(chat_id=message.chat.id,
                                 message_id=message_id,
                                 text='✅ Позиция обновлена',
@@ -498,21 +617,21 @@ async def update_item_price(message: types.Message):
                 f'обновил позицию "{item_old_name}" на "{item_new_name}"')
 
 
-async def delete_item_callback_handler(callback_query: types.CallbackQuery):
-    bot, user_id = await get_bot_user_ids(callback_query)
-    TgConfig.STATE[f'{user_id}_message_id'] = callback_query.message.message_id
+async def delete_item_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
     TgConfig.STATE[user_id] = 'process_removing_item'
     role = check_role(user_id)
     if role >= Permission.SHOP_MANAGE:
-        await bot.edit_message_text('Введите название товара',
-                                    chat_id=callback_query.message.chat.id,
-                                    message_id=callback_query.message.message_id,
+        await bot.edit_message_text('Введите название позиции',
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
                                     reply_markup=back("goods_management"))
         return
-    await callback_query.answer('Недостаточно прав')
+    await call.answer('Недостаточно прав')
 
 
-async def delete_str_item(message: types.Message):
+async def delete_str_item(message: Message):
     bot, user_id = await get_bot_user_ids(message)
     msg = message.text
     TgConfig.STATE[user_id] = None
@@ -523,13 +642,13 @@ async def delete_str_item(message: types.Message):
     if not item:
         await bot.edit_message_text(chat_id=message.chat.id,
                                     message_id=message_id,
-                                    text='❌ Товар не удален (Такого товара не существует)',
+                                    text='❌ Позиция не удалена (Такой позиции не существует)',
                                     reply_markup=back('goods_management'))
         return
     delete_item(msg)
     await bot.edit_message_text(chat_id=message.chat.id,
                                 message_id=message_id,
-                                text='✅ Товар удален',
+                                text='✅ Позиция удалена',
                                 reply_markup=back('goods_management'))
     admin_info = await bot.get_chat(user_id)
     logger.info(f"Пользователь {user_id} ({admin_info.first_name}) "
@@ -594,3 +713,10 @@ def register_shop_management(dp: Dispatcher) -> None:
                                 lambda c: TgConfig.STATE.get(c.from_user.id) == 'check_category')
     dp.register_message_handler(check_category_name_for_update,
                                 lambda c: TgConfig.STATE.get(c.from_user.id) == 'update_category_name')
+    dp.register_message_handler(update_item_infinity,
+                                lambda c: TgConfig.STATE.get(c.from_user.id) == 'apply_change')
+
+    dp.register_callback_query_handler(adding_value_to_position,
+                                       lambda c: c.data.startswith('infinity_'))
+    dp.register_callback_query_handler(update_item_process,
+                                       lambda c: c.data.startswith('change_'))
