@@ -11,7 +11,7 @@ from bot.database.methods import select_max_role_id, create_user, check_channel,
     select_user_operations, select_user_items, check_user_referrals, check_rules, start_operation, \
     select_unfinished_operations, get_user_referral, finish_operation, update_balance, create_operation, \
     bought_items_list, check_value
-from bot.handlers.other import get_bot_user_ids, check_sub_channel
+from bot.handlers.other import get_bot_user_ids, check_sub_channel, get_bot_info
 from bot.keyboards import check_sub, main_menu, categories_list, goods_list, user_items_list, back, item_info, \
     profile, rules, payment_menu, close
 from bot.logger_mesh import logger
@@ -315,7 +315,7 @@ async def referral_callback_handler(call: CallbackQuery):
     TgConfig.STATE[user_id] = None
     referrals = check_user_referrals(user_id)
     await bot.edit_message_text(f'💚 Реферальная система\n'
-                                f'🔗 Ссылка: https://t.me/aiogram_examination_bot?start={user_id}\n'
+                                f'🔗 Ссылка: https://t.me/{await get_bot_info(call)}?start={user_id}\n'
                                 f'Количество рефералов: {referrals}\n'
                                 f'📔 Реферальная система позволит Вам заработать деньги без всяких вложений. '
                                 f'Необходимо всего лишь распространять свою реферальную ссылку и Вы будете получать'
