@@ -1,4 +1,5 @@
 import datetime
+import os
 
 from aiogram import Dispatcher
 from aiogram.types import Message, CallbackQuery
@@ -27,6 +28,23 @@ async def shop_callback_handler(call: CallbackQuery):
                                     message_id=call.message.message_id,
                                     reply_markup=shop_management())
         return
+    await call.answer('Недостаточно прав')
+
+
+async def logs_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[user_id] = None
+    role = check_role(user_id)
+    file_path = 'bot.log'
+    if role >= Permission.SHOP_MANAGE:
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+            with open(file_path, 'rb') as document:
+                await bot.send_document(chat_id=call.message.chat.id,
+                                        document=document)
+                return
+        else:
+            await call.answer(text="❗️ Логов пока нет")
+            return
     await call.answer('Недостаточно прав')
 
 
@@ -670,6 +688,8 @@ def register_shop_management(dp: Dispatcher) -> None:
                                        lambda c: c.data == 'delete_item')
     dp.register_callback_query_handler(shop_callback_handler,
                                        lambda c: c.data == 'shop_management')
+    dp.register_callback_query_handler(logs_callback_handler,
+                                       lambda c: c.data == 'show_logs')
     dp.register_callback_query_handler(goods_management_callback_handler,
                                        lambda c: c.data == 'goods_management')
     dp.register_callback_query_handler(categories_callback_handler,

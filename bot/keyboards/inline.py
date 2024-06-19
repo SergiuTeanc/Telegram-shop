@@ -155,6 +155,8 @@ def shop_management() -> InlineKeyboardMarkup:
          ],
         [InlineKeyboardButton('Управление категориями', callback_data='categories_management')
          ],
+        [InlineKeyboardButton('Показать логи', callback_data='show_logs')
+         ],
         [InlineKeyboardButton('Статистика', callback_data='statistics')
          ],
         [InlineKeyboardButton('🔙 Вернуться назад', callback_data='console')
