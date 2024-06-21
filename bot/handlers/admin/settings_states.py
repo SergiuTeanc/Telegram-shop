@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from bot.database.models import Permission
 from bot.keyboards import setting, back, reset_config
 from bot.database.methods import check_role, delete_config, check_channel, update_config, create_config, check_helper, \
-    check_rules, check_group
+    check_rules, check_group, check_time
 from bot.misc import TgConfig
 from bot.logger_mesh import logger
 from bot.handlers.other import get_bot_user_ids
@@ -78,6 +78,46 @@ async def process_channel_for_upd(message: Message):
                                 reply_markup=back("settings"))
     user_info = await bot.get_chat(user_id)
     logger.info(f"Канал был обновлен пользователем {user_id} ({user_info.first_name})")
+
+
+async def upd_time_callback_handler(call: CallbackQuery):
+    bot, user_id = await get_bot_user_ids(call)
+    TgConfig.STATE[f'{user_id}_message_id'] = call.message.message_id
+    TgConfig.STATE[user_id] = 'upd_time'
+    role = check_role(user_id)
+    if role >= Permission.SETTINGS_MANAGE:
+        await bot.edit_message_text(
+            'Введите время (в секундах), отведенное на оплату',
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=back('settings'))
+        return
+    await call.answer('Недостаточно прав')
+
+
+async def process_time_for_upd(message: Message):
+    bot, user_id = await get_bot_user_ids(message)
+    message_id = TgConfig.STATE.get(f'{user_id}_message_id')
+    msg = message.text
+    await bot.delete_message(chat_id=message.chat.id,
+                             message_id=message.message_id)
+    if msg.isdigit() and int(msg) > 0:
+        if check_time():
+            update_config('time', int(msg))
+        else:
+            create_config('time', int(msg))
+        await bot.edit_message_text(chat_id=message.chat.id,
+                                    message_id=message_id,
+                                    text='✅ Время на оплату обновлено',
+                                    reply_markup=back("settings"))
+        user_info = await bot.get_chat(user_id)
+        logger.info(f"Время для оплаты было обновлено пользователем {user_id} ({user_info.first_name})")
+        TgConfig.STATE[user_id] = None
+    else:
+        await bot.edit_message_text(chat_id=message.chat.id,
+                                    message_id=message_id,
+                                    text='Введите целое число больше 0',
+                                    reply_markup=back("settings"))
 
 
 async def upd_helper_callback_handler(call: CallbackQuery):
@@ -206,6 +246,8 @@ def register_settings(dp: Dispatcher) -> None:
                                        lambda c: c.data == 'settings')
     dp.register_callback_query_handler(upd_channel_callback_handler,
                                        lambda c: c.data == 'channel_data')
+    dp.register_callback_query_handler(upd_time_callback_handler,
+                                       lambda c: c.data == 'time_data')
     dp.register_callback_query_handler(upd_helper_callback_handler,
                                        lambda c: c.data == 'helper_data')
     dp.register_callback_query_handler(upd_rules_callback_handler,
@@ -215,6 +257,8 @@ def register_settings(dp: Dispatcher) -> None:
 
     dp.register_message_handler(process_channel_for_upd,
                                 lambda c: TgConfig.STATE.get(c.from_user.id) == 'upd_channel')
+    dp.register_message_handler(process_time_for_upd,
+                                lambda c: TgConfig.STATE.get(c.from_user.id) == 'upd_time')
     dp.register_message_handler(process_helper_for_upd,
                                 lambda c: TgConfig.STATE.get(c.from_user.id) == 'upd_helper')
     dp.register_message_handler(process_rules_for_upd,

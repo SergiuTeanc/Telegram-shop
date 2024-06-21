@@ -10,6 +10,7 @@ def delete_item(item_name) -> None:
 def delete_only_items(item_name) -> None:
     Database().session.query(ItemValues).filter(ItemValues.item_name == item_name).delete()
 
+
 def delete_category(category_name) -> None:
     goods = Database().session.query(Goods.name).filter(Goods.category_name == category_name).all()
     for item in goods:

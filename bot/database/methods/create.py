@@ -70,7 +70,7 @@ def add_bought_item(item_name: str, value: str, price: int, buyer_id: int,
     session.commit()
 
 
-def create_config(key, value: str) -> None:
+def create_config(key, value) -> None:
     session = Database().session
     session.add(
         Configuration(key=key, value=value))

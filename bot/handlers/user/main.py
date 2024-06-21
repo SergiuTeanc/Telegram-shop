@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from urllib.parse import urlparse
 
@@ -10,7 +11,7 @@ from bot.database.methods import select_max_role_id, create_user, check_channel,
     select_item_values_amount, get_user_balance, get_item_value, buy_item, add_bought_item, buy_item_for_balance, \
     select_user_operations, select_user_items, check_user_referrals, check_rules, start_operation, \
     select_unfinished_operations, get_user_referral, finish_operation, update_balance, create_operation, \
-    bought_items_list, check_value
+    bought_items_list, check_value, check_time
 from bot.handlers.other import get_bot_user_ids, check_sub_channel, get_bot_info
 from bot.keyboards import check_sub, main_menu, categories_list, goods_list, user_items_list, back, item_info, \
     profile, rules, payment_menu, close
@@ -359,12 +360,21 @@ async def process_replenish_balance(message: Message):
 
     label, url = quick_pay(message)
     start_operation(user_id, text, label)
+    sleep = 1800 if not check_time() else int(check_time())
+    sleep_time = int(sleep)
     await bot.edit_message_text(chat_id=message.chat.id,
                                 message_id=message_id,
-                                text=f'Вы пополняете баланс на сумму {text}₽. '
-                                     f'Нажмите «Оплатить» для перехода на сайт платежной системы.\n\n'
-                                     f'❗️ После оплаты нажмите кнопку «Проверить»',
+                                text=f'💵 Сумма пополнения: {text}₽.\n'
+                                     f'⌛️ У вас имеется {int(sleep_time/60)} минут на оплату.\n'
+                                     f'<b>❗️ После оплаты нажмите кнопку «Проверить оплату»</b>\n\n',
                                 reply_markup=payment_menu(url, label))
+    await asyncio.sleep(sleep_time)
+    info = select_unfinished_operations(label)
+    if info:
+        payment_status = await check_payment_status(label)
+
+        if not payment_status == "success":
+            finish_operation(label)
 
 
 async def checking_payment(call: CallbackQuery):

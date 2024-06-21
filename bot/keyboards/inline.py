@@ -233,6 +233,8 @@ def setting() -> InlineKeyboardMarkup:
          ],
         [InlineKeyboardButton('ℹ️ Изменить канал', callback_data='channel_data'),
          InlineKeyboardButton('ℹ️ Изменить группу', callback_data='group_data')],
+        [InlineKeyboardButton('⏳ Изменить время оплаты', callback_data='time_data')
+         ],
         [InlineKeyboardButton('🔙 Вернуться назад', callback_data='console')
          ]
     ]
@@ -241,9 +243,9 @@ def setting() -> InlineKeyboardMarkup:
 
 def payment_menu(url, label) -> InlineKeyboardMarkup:
     inline_keyboard = [
-        [InlineKeyboardButton('Оплатить', url=url)
+        [InlineKeyboardButton('✅ Оплатить', url=url)
          ],
-        [InlineKeyboardButton('Проверить', callback_data=f'check_{label}')
+        [InlineKeyboardButton('🔄 Проверить оплату', callback_data=f'check_{label}')
          ],
         [InlineKeyboardButton('🔙 Вернуться назад', callback_data='replenish_balance')
          ]

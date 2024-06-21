@@ -201,6 +201,11 @@ def check_group() -> int | None:
     return result[0] if result else None
 
 
+def check_time() -> int | None:
+    result = Database().session.query(Configuration.value).filter(Configuration.key == 'time').first()
+    return result[0] if result else None
+
+
 def select_unfinished_operations(operation_id: str):
     try:
         return Database().session.query(UnfinishedOperations.operation_value).filter(
