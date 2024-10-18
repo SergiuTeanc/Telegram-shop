@@ -1,5 +1,4 @@
 from aiogram import Dispatcher, Bot
-from bot.misc import EnvKeys
 
 
 async def get_bot_user_ids(query):

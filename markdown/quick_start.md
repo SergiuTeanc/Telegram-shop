@@ -12,6 +12,5 @@
       - [OWNER_ID](https://telegram.me/myidbot)
       - [ACCESS_TOKEN](https://pypi.org/project/YooMoney/#access-token)
       - [ACCOUNT_NUMBER](https://pypi.org/project/YooMoney/#account-information)
-      - [DB_OWNER, DB_PASSWORD, DB_HOST, DB_NAME](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html#setting-alternate-search-paths-on-connect)
    5. Run run.py
 ### [BACK](../README.md)

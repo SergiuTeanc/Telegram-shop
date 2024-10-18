@@ -1,6 +1,6 @@
 # Telegram shop
 This is an example Telegram shop bot.
-this is a fairly simple template, but at the same time it is quite effective for selling something directly in a telegram  
+this is a fairly simple template, but at the same time it is quite effective for selling something directly in the telegram  
 ## Example:  
 ### admin pov  
 ![](assets/admin_pov.gif)
@@ -27,7 +27,7 @@ this is a fairly simple template, but at the same time it is quite effective for
     - Aiogram
 
 - #### Database:
-    - PostgreSQL
+    - SQLite3
     - Sqlalchemy
 
 - #### Payment:

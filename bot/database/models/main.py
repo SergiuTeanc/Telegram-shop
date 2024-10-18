@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey, Text, Boolean, VARCHAR
 from bot.database.main import Database
 from sqlalchemy.orm import relationship
 
@@ -76,7 +76,7 @@ class User(Database.BASE):
     role_id = Column(Integer, ForeignKey('roles.id'), default=1)
     balance = Column(BigInteger, nullable=False, default=0)
     referral_id = Column(BigInteger, nullable=True)
-    registration_date = Column(DateTime, nullable=False)
+    registration_date = Column(VARCHAR, nullable=False)
     user_operations = relationship("Operations", back_populates="user_telegram_id")
     user_unfinished_operations = relationship("UnfinishedOperations", back_populates="user_telegram_id")
 
@@ -131,7 +131,7 @@ class BoughtGoods(Database.BASE):
     value = Column(Text, nullable=False)
     price = Column(BigInteger, nullable=False)
     buyer_id = Column(BigInteger, nullable=False, default=0)
-    bought_datetime = Column(DateTime, nullable=False)
+    bought_datetime = Column(VARCHAR, nullable=False)
     unique_id = Column(BigInteger, nullable=False, unique=True)
 
     def __init__(self, name: str, value: str, price: int, bought_datetime: datetime.datetime, unique_id,
@@ -149,7 +149,7 @@ class Operations(Database.BASE):
     id = Column(Integer, nullable=False, primary_key=True)
     user_id = Column(BigInteger, ForeignKey('users.telegram_id'), nullable=False)
     operation_value = Column(BigInteger, nullable=False)
-    operation_time = Column(DateTime, nullable=False)
+    operation_time = Column(VARCHAR, nullable=False)
     user_telegram_id = relationship("User", back_populates="user_operations")
 
     def __init__(self, user_id: int, operation_value: int, operation_time: datetime.datetime):

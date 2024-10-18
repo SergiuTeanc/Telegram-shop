@@ -1,7 +1,7 @@
+import datetime
 from typing import List
 
 import sqlalchemy
-from sqlalchemy import cast, Date
 from sqlalchemy import exc, func
 
 from bot.database.models import Database, User, ItemValues, Goods, Categories, Configuration, Role, BoughtGoods, \
@@ -30,8 +30,13 @@ def select_max_role_id() -> int:
 
 def select_today_users(date: str) -> int | None:
     try:
+        date_obj = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+        start_of_day = datetime.datetime.combine(date_obj, datetime.time.min)
+        end_of_day = datetime.datetime.combine(date_obj, datetime.time.max)
+
         return Database().session.query(User).filter(
-            func.date_trunc('day', cast(User.registration_date, Date)) == func.date_trunc('day', cast(date, Date))
+            User.registration_date >= str(start_of_day),
+            User.registration_date <= str(end_of_day)
         ).count()
     except exc.NoResultFound:
         return None
@@ -167,20 +172,44 @@ def select_count_bought_items() -> int:
     return Database().session.query(BoughtGoods).count()
 
 
-def select_today_orders(date: str) -> float:
-    return Database().session.query(func.sum(BoughtGoods.price)).filter(
-        func.date_trunc('day', cast(BoughtGoods.bought_datetime, Date)) == func.date_trunc('day', cast(date, Date))
-    ).scalar() or 0
+def select_today_orders(date: str) -> int | None:
+    try:
+        date_obj = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+        start_of_day = datetime.datetime.combine(date_obj, datetime.time.min)
+        end_of_day = datetime.datetime.combine(date_obj, datetime.time.max)
+
+        return (
+                Database().session.query(func.sum(BoughtGoods.price))
+                .filter(
+                    func.date(BoughtGoods.bought_datetime) >= start_of_day.date(),
+                    func.date(BoughtGoods.bought_datetime) <= end_of_day.date()
+                )
+                .scalar() or 0
+        )
+    except exc.NoResultFound:
+        return None
 
 
 def select_all_orders() -> float:
     return Database().session.query(func.sum(BoughtGoods.price)).scalar() or 0
 
 
-def select_today_operations(date: str) -> float:
-    return Database().session.query(func.sum(Operations.operation_value)).filter(
-        func.date_trunc('day', cast(Operations.operation_time, Date)) == func.date_trunc('day', cast(date, Date))
-    ).scalar() or 0
+def select_today_operations(date: str) -> int | None:
+    try:
+        date_obj = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+        start_of_day = datetime.datetime.combine(date_obj, datetime.time.min)
+        end_of_day = datetime.datetime.combine(date_obj, datetime.time.max)
+
+        return (
+                Database().session.query(func.sum(Operations.operation_value))
+                .filter(
+                    func.date(Operations.operation_time) >= start_of_day.date(),
+                    func.date(Operations.operation_time) <= end_of_day.date()
+                )
+                .scalar() or 0
+        )
+    except exc.NoResultFound:
+        return None
 
 
 def select_all_operations() -> float:

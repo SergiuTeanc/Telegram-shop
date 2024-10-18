@@ -5,7 +5,7 @@ from bot.misc import EnvKeys
 
 def quick_pay(message):
     bill = Quickpay(
-        receiver=EnvKeys.RECEIVER_TOKEN,
+        receiver=EnvKeys.ACCOUNT_NUMBER,
         quickpay_form="shop",
         targets="Sponsor",
         paymentType="SB",
@@ -18,7 +18,7 @@ def quick_pay(message):
 
 
 async def check_payment_status(label: str):
-    client = Client(EnvKeys.CLIENT_TOKEN)
+    client = Client(EnvKeys.ACCESS_TOKEN)
     history = client.operation_history(label=label)
     for operation in history.operations:
         return operation.status

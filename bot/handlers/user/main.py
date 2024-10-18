@@ -32,7 +32,7 @@ async def start(message: Message):
     current_time = datetime.datetime.now()
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
     referral_id = message.text[7:] if message.text[7:] != str(user_id) else None
-    user_role = owner if str(user_id) == EnvKeys.OWNER else 1
+    user_role = owner if str(user_id) == EnvKeys.OWNER_ID else 1
     create_user(telegram_id=user_id, registration_date=formatted_time, referral_id=referral_id, role=user_role)
     chat = check_channel()
     role_data = check_role(user_id)
@@ -51,12 +51,7 @@ async def start(message: Message):
                 return
 
     except ChatNotFound:
-        await bot.send_message(user_id,
-                               '⛩️ Основное меню',
-                               reply_markup=main_menu(role_data, chat, check_helper()))
-        await bot.delete_message(chat_id=message.chat.id,
-                                 message_id=message.message_id)
-        return
+        pass
 
     keyboard = main_menu(role_data, chat, check_helper())
     await bot.send_message(user_id,
@@ -155,25 +150,17 @@ async def item_info_callback_handler(call: CallbackQuery):
     TgConfig.STATE[user_id] = None
     item_info_list = get_item_info(item_name)
     category = item_info_list['category_name']
-    if check_value(item_name) is False:
-        amount = select_item_values_amount(item_name)
-        await bot.edit_message_text(
-            f'🏪 Товар {item_name}\n'
-            f'Описание: {item_info_list["description"]}\n'
-            f'Цена - {item_info_list["price"]}₽\n'
-            f'Количество - {round(amount)}шт.',
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            reply_markup=item_info(item_name, category))
-    else:
-        await bot.edit_message_text(
-            f'🏪 Товар {item_name}\n'
-            f'Описание: {item_info_list["description"]}\n'
-            f'Цена - {item_info_list["price"]}₽\n'
-            f'Количество - неограниченно',
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            reply_markup=item_info(item_name, category))
+    quantity = 'Количество - неограниченно'
+    if not check_value(item_name):
+        quantity = f'Количество - {select_item_values_amount(item_name)}шт.'
+    await bot.edit_message_text(
+        f'🏪 Товар {item_name}\n'
+        f'Описание: {item_info_list["description"]}\n'
+        f'Цена - {item_info_list["price"]}₽\n'
+        f'{quantity}',
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        reply_markup=item_info(item_name, category))
 
 
 async def buy_item_callback_handler(call: CallbackQuery):
@@ -330,7 +317,7 @@ async def replenish_balance_callback_handler(call: CallbackQuery):
     bot, user_id = await get_bot_user_ids(call)
     message_id = call.message.message_id
 
-    if EnvKeys.CLIENT_TOKEN and EnvKeys.RECEIVER_TOKEN is not None:
+    if EnvKeys.ACCESS_TOKEN and EnvKeys.ACCOUNT_NUMBER is not None:
         TgConfig.STATE[f'{user_id}_message_id'] = message_id
         TgConfig.STATE[user_id] = 'process_replenish_balance'
         await bot.edit_message_text(chat_id=call.message.chat.id,
