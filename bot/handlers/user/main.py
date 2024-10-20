@@ -45,7 +45,7 @@ async def start(message: Message):
             if not await check_sub_channel(chat_member):
                 await bot.send_message(user_id,
                                        'Для начала подпишитесь на новостной канал',
-                                       reply_markup=check_sub())
+                                       reply_markup=check_sub(channel_username))
                 await bot.delete_message(chat_id=message.chat.id,
                                          message_id=message.message_id)
                 return
@@ -352,7 +352,7 @@ async def process_replenish_balance(message: Message):
     await bot.edit_message_text(chat_id=message.chat.id,
                                 message_id=message_id,
                                 text=f'💵 Сумма пополнения: {text}₽.\n'
-                                     f'⌛️ У вас имеется {int(sleep_time/60)} минут на оплату.\n'
+                                     f'⌛️ У вас имеется {int(sleep_time / 60)} минут на оплату.\n'
                                      f'<b>❗️ После оплаты нажмите кнопку «Проверить оплату»</b>\n\n',
                                 reply_markup=payment_menu(url, label))
     await asyncio.sleep(sleep_time)

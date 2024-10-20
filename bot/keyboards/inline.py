@@ -208,9 +208,9 @@ def close() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
 
-def check_sub() -> InlineKeyboardMarkup:
+def check_sub(channel_username) -> InlineKeyboardMarkup:
     inline_keyboard = [
-        [InlineKeyboardButton('Подписаться', url='https://t.me/Serge_as_the_meaning_of_life')
+        [InlineKeyboardButton('Подписаться', url=f'https://t.me/{channel_username}')
          ],
         [InlineKeyboardButton('Проверить', callback_data='sub_channel_done')
          ]
